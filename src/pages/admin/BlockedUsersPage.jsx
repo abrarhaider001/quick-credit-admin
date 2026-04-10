@@ -5,9 +5,10 @@ import {
   isPhoneInBlockedList,
   subscribeBlocked,
 } from '../../api/firestoreAdmin'
+import { PhoneInputIndia } from '../../components/PhoneInputIndia'
 import { useUi } from '../../context/useUi'
-import { formatDate } from '../../lib/format'
-import { isValidPhone, normalizePhone } from '../../lib/validation'
+import { formatDate, formatIndianPhoneDisplay } from '../../lib/format'
+import { fullPhoneFromLocal10, isValidIndianLocal10 } from '../../lib/validation'
 
 const PAGE_SIZE = 12
 
@@ -16,7 +17,7 @@ export default function BlockedUsersPage() {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [phone, setPhone] = useState('')
+  const [phoneLocal, setPhoneLocal] = useState('')
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [adding, setAdding] = useState(false)
@@ -49,20 +50,24 @@ export default function BlockedUsersPage() {
 
   async function handleAdd(e) {
     e.preventDefault()
-    const p = normalizePhone(phone)
-    if (!isValidPhone(p)) {
-      toast('Enter a valid phone number', 'error')
+    if (!isValidIndianLocal10(phoneLocal)) {
+      toast('Enter a valid 10-digit Indian mobile (starting 6–9)', 'error')
+      return
+    }
+    const full = fullPhoneFromLocal10(phoneLocal)
+    if (!full) {
+      toast('Invalid phone', 'error')
       return
     }
     setAdding(true)
     try {
-      const exists = await isPhoneInBlockedList(p)
+      const exists = await isPhoneInBlockedList(full)
       if (exists) {
         toast('This number is already blocked', 'error')
         return
       }
-      await addBlockedPhone(p)
-      setPhone('')
+      await addBlockedPhone(full)
+      setPhoneLocal('')
       toast('Number blocked', 'success')
     } catch (err) {
       toast(err?.message || 'Could not add', 'error')
@@ -90,14 +95,9 @@ export default function BlockedUsersPage() {
       {error && <div className="admin-error">{error}</div>}
 
       <form className="admin-toolbar" onSubmit={handleAdd} style={{ marginBottom: '1.25rem' }}>
-        <input
-          type="tel"
-          className="input admin-toolbar__search"
-          placeholder="Phone number to block…"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          aria-label="Phone to block"
-        />
+        <div className="admin-toolbar__search" style={{ minWidth: 220 }}>
+          <PhoneInputIndia value10={phoneLocal} onChange10={setPhoneLocal} required />
+        </div>
         <button type="submit" className="btn btn--danger btn--sm" disabled={adding}>
           {adding ? 'Adding…' : 'Block number'}
         </button>
@@ -140,7 +140,7 @@ export default function BlockedUsersPage() {
                 ) : (
                   slice.map((r) => (
                     <tr key={r.id}>
-                      <td className="admin-table__mono">{r.phone}</td>
+                      <td className="admin-table__mono">{formatIndianPhoneDisplay(r.phone)}</td>
                       <td>{formatDate(r.blockedAt)}</td>
                       <td>
                         <button type="button" className="btn btn--ghost btn--sm" onClick={() => handleRemove(r)}>

@@ -16,6 +16,7 @@ import {
   where,
 } from 'firebase/firestore'
 import { db } from '../firebase'
+import { normalizeIndianPhoneStorage } from '../lib/validation'
 
 const USERS = 'users'
 const ORDERS = 'orders'
@@ -82,14 +83,16 @@ export async function getAdminSettingsOnce() {
 }
 
 export async function isPhoneUsedByAnotherUser(phone, excludeUserId) {
-  const p = String(phone).trim()
+  const p = normalizeIndianPhoneStorage(phone)
+  if (!p) return false
   const q = query(collection(db, USERS), where('phone', '==', p))
   const snap = await getDocs(q)
-  return snap.docs.some((d) => d.id !== excludeUserId)
+  return snap.docs.some((d) => excludeUserId == null || d.id !== excludeUserId)
 }
 
 export async function isPhoneInBlockedList(phone) {
-  const p = String(phone).trim()
+  const p = normalizeIndianPhoneStorage(phone)
+  if (!p) return false
   const q = query(collection(db, BLOCKED), where('phone', '==', p))
   const snap = await getDocs(q)
   return !snap.empty
@@ -104,6 +107,28 @@ export async function updateUserDoc(userId, patch) {
   await updateDoc(ref, {
     ...patch,
     updatedAt: serverTimestamp(),
+  })
+}
+
+/**
+ * Firestore-only borrower profile (no Firebase Auth). Auto document ID.
+ * Phone stored as +91XXXXXXXXXX.
+ */
+export async function createUserDoc({ name, phone, loanSettings, isBlocked }) {
+  const normalized = normalizeIndianPhoneStorage(phone)
+  if (!normalized) throw new Error('Invalid Indian mobile number')
+  await addDoc(collection(db, USERS), {
+    name: String(name).trim(),
+    phone: normalized,
+    role: 'user',
+    isBlocked: Boolean(isBlocked),
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    loanSettings: {
+      minLimit: Number(loanSettings.minLimit),
+      maxLimit: Number(loanSettings.maxLimit),
+      selectedAmount: Number(loanSettings.selectedAmount),
+    },
   })
 }
 
@@ -147,8 +172,10 @@ export async function deleteOrder(orderId) {
 }
 
 export async function addBlockedPhone(phone) {
+  const normalized = normalizeIndianPhoneStorage(phone)
+  if (!normalized) throw new Error('Invalid Indian mobile number')
   await addDoc(collection(db, BLOCKED), {
-    phone: String(phone).trim(),
+    phone: normalized,
     blockedAt: serverTimestamp(),
   })
 }
@@ -171,7 +198,7 @@ export async function saveAdminSettings({ minLimit, maxLimit, defaultInterestRat
 }
 
 export async function fetchOverviewStats() {
-  const usersQ = collection(db, USERS)
+  const usersQ = query(collection(db, USERS), where('role', '==', 'user'))
   const pendingQ = query(collection(db, ORDERS), where('isCompleted', '==', false))
   const completedQ = query(collection(db, ORDERS), where('isCompleted', '==', true))
 

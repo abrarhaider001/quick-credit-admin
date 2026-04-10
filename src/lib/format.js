@@ -1,3 +1,5 @@
+import { digitsOnly, normalizeIndianPhoneStorage } from './validation'
+
 /** @param {import('firebase/firestore').Timestamp | undefined} ts */
 export function formatDate(ts) {
   if (!ts?.toDate) return '—'
@@ -28,4 +30,21 @@ export function formatMoney(n) {
     currency: 'USD',
     maximumFractionDigits: 0,
   }).format(Number(n))
+}
+
+/**
+ * Display stored phone as compact `+913010668945` (same as Firestore).
+ * @param {string | undefined} phone
+ */
+export function formatIndianPhoneDisplay(phone) {
+  if (phone == null || phone === '') return '—'
+  const n = normalizeIndianPhoneStorage(phone)
+  if (n) return n
+  const d = digitsOnly(phone)
+  let local = ''
+  if (d.length >= 12 && d.startsWith('91')) local = d.slice(-10)
+  else if (d.length === 10) local = d
+  else if (d.length === 11 && d.startsWith('0')) local = d.slice(1)
+  if (local.length === 10) return `+91${local}`
+  return String(phone)
 }

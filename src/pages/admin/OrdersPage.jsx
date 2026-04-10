@@ -8,9 +8,22 @@ import {
   updateOrder,
 } from '../../api/firestoreAdmin'
 import { Modal } from '../../components/Modal'
+import { PhoneInputIndia } from '../../components/PhoneInputIndia'
 import { useUi } from '../../context/useUi'
-import { formatDate, formatMoney, fromDatetimeLocal, toDatetimeLocalValue } from '../../lib/format'
-import { loanAmountInBounds } from '../../lib/validation'
+import {
+  formatDate,
+  formatIndianPhoneDisplay,
+  formatMoney,
+  fromDatetimeLocal,
+  toDatetimeLocalValue,
+} from '../../lib/format'
+import {
+  digitsOnly,
+  fullPhoneFromLocal10,
+  getIndianLocal10ForInput,
+  isValidIndianLocal10,
+  loanAmountInBounds,
+} from '../../lib/validation'
 
 const PAGE_SIZE = 10
 
@@ -39,6 +52,8 @@ export default function OrdersPage({ completed }) {
     return () => unsubUsers()
   }, [])
 
+  const borrowerUsers = useMemo(() => users.filter((u) => u.role === 'user'), [users])
+
   useEffect(() => {
     const unsub = subscribeOrders(
       completed,
@@ -58,12 +73,14 @@ export default function OrdersPage({ completed }) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
+    const digitQ = digitsOnly(search)
     if (!q) return rows
-    return rows.filter(
-      (o) =>
-        String(o.userName || '').toLowerCase().includes(q) ||
-        String(o.phone || '').toLowerCase().includes(q),
-    )
+    return rows.filter((o) => {
+      const nameMatch = String(o.userName || '').toLowerCase().includes(q)
+      const phoneDigits = digitsOnly(o.phone || '')
+      const phoneMatch = digitQ.length > 0 && phoneDigits.includes(digitQ)
+      return nameMatch || phoneMatch
+    })
   }, [rows, search])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -151,7 +168,7 @@ export default function OrdersPage({ completed }) {
                   slice.map((o) => (
                     <tr key={o.id}>
                       <td>{o.userName || '—'}</td>
-                      <td className="admin-table__mono">{o.phone || '—'}</td>
+                      <td className="admin-table__mono">{formatIndianPhoneDisplay(o.phone)}</td>
                       <td>{formatMoney(o.loanAmount)}</td>
                       <td>{formatMoney(o.totalDueAmount)}</td>
                       <td>{formatDate(o.dueDate)}</td>
@@ -214,7 +231,7 @@ export default function OrdersPage({ completed }) {
       {creating && (
         <OrderModal
           mode="create"
-          users={users}
+          users={borrowerUsers}
           defaultCompleted={completed}
           onClose={() => setCreating(false)}
           onSaved={() => {
@@ -230,7 +247,7 @@ export default function OrdersPage({ completed }) {
         <OrderModal
           mode="edit"
           order={editing}
-          users={users}
+          users={borrowerUsers}
           onClose={() => setEditing(null)}
           onSaved={() => {
             setEditing(null)
@@ -248,7 +265,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
   const isEdit = mode === 'edit'
   const [userId, setUserId] = useState(order?.userId || '')
   const [userName, setUserName] = useState(order?.userName || '')
-  const [phone, setPhone] = useState(order?.phone || '')
+  const [phoneLocal, setPhoneLocal] = useState(() => getIndianLocal10ForInput(order?.phone))
   const [loanAmount, setLoanAmount] = useState(order?.loanAmount ?? '')
   const [totalDueAmount, setTotalDueAmount] = useState(order?.totalDueAmount ?? '')
   const [loanDate, setLoanDate] = useState(
@@ -266,7 +283,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
       const u = users.find((x) => x.id === userId)
       if (u) {
         setUserName(u.name || '')
-        setPhone(u.phone || '')
+        setPhoneLocal(getIndianLocal10ForInput(u.phone))
       }
     }
   }, [userId, users, isEdit])
@@ -294,8 +311,18 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
       if (!ok) return
     }
 
-    if (!String(userName).trim() || !String(phone).trim() || !String(userId).trim()) {
+    if (!String(userName).trim() || !String(phoneLocal).trim() || !String(userId).trim()) {
       toast('User, name, and phone are required', 'error')
+      return
+    }
+
+    if (!isValidIndianLocal10(phoneLocal)) {
+      toast('Enter a valid 10-digit Indian mobile (starting 6–9)', 'error')
+      return
+    }
+    const phoneNorm = fullPhoneFromLocal10(phoneLocal)
+    if (!phoneNorm) {
+      toast('Invalid phone', 'error')
       return
     }
 
@@ -304,7 +331,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
       if (isEdit) {
         await updateOrder(order.id, {
           userName: String(userName).trim(),
-          phone: String(phone).trim(),
+          phone: phoneNorm,
           loanAmount: la,
           totalDueAmount: td,
           loanDate: loanD,
@@ -316,7 +343,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
         await createOrder({
           userId: String(userId).trim(),
           userName: String(userName).trim(),
-          phone: String(phone).trim(),
+          phone: phoneNorm,
           loanAmount: la,
           totalDueAmount: td,
           loanDate: loanD,
@@ -351,7 +378,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
       <form id="order-form" className="form-grid" onSubmit={handleSubmit}>
         {!isEdit && (
           <label className="field field--full">
-            <span className="field__label">Borrower (Auth UID)</span>
+            <span className="field__label">Borrower (Firestore user ID)</span>
             <select
               className="input"
               value={userId}
@@ -361,7 +388,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
               <option value="">Select user…</option>
               {users.map((u) => (
                 <option key={u.id} value={u.id}>
-                  {u.name || u.id} — {u.phone || u.id}
+                  {u.name || u.id} — {formatIndianPhoneDisplay(u.phone)}
                 </option>
               ))}
             </select>
@@ -383,7 +410,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
         </label>
         <label className="field field--full">
           <span className="field__label">Phone</span>
-          <input className="input" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+          <PhoneInputIndia value10={phoneLocal} onChange10={setPhoneLocal} required />
         </label>
         <div className="form-grid form-grid--2 field--full">
           <label className="field">

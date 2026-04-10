@@ -49,7 +49,7 @@ export default function OverviewPage() {
       ) : stats ? (
         <div className="stat-grid">
           <article className="stat-card">
-            <p className="stat-card__label">Total users</p>
+            <p className="stat-card__label">Borrowers (role: user)</p>
             <p className="stat-card__value stat-card__value--muted">{stats.totalUsers}</p>
           </article>
           <article className="stat-card">
