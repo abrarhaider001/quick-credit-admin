@@ -1,0 +1,60 @@
+# Firestore schema
+
+**`users/{userId}`** — `userId` = Firebase Auth UID  
+| Field | Type |
+|-------|------|
+| name | string |
+| phone | string |
+| role | string (`admin` \| `user`) |
+| isBlocked | boolean |
+| createdAt | timestamp |
+| updatedAt | timestamp |
+| loanSettings | map |
+
+**`loanSettings` (map)**  
+| Field | Type |
+|-------|------|
+| minLimit | number |
+| maxLimit | number |
+| selectedAmount | number |
+
+---
+
+**`orders/{orderId}`**  
+| Field | Type |
+|-------|------|
+| userId | string (Auth UID) |
+| userName | string |
+| phone | string |
+| loanAmount | number |
+| totalDueAmount | number |
+| loanDate | timestamp |
+| dueDate | timestamp |
+| createdAt | timestamp |
+| updatedAt | timestamp |
+| paymentUrl | string |
+| isCompleted | boolean |
+
+---
+
+**`blocked_users/{docId}`**  
+| Field | Type |
+|-------|------|
+| phone | string |
+| blockedAt | timestamp |
+
+---
+
+**`admin_settings/config`** (single doc)  
+| Field | Type |
+|-------|------|
+| minLimit | number |
+| maxLimit | number |
+| defaultInterestRate | number (optional) |
+| updatedAt | timestamp |
+
+---
+
+Auth custom claim for admins: `role` = `"admin"`.  
+`orders.userId` must equal the borrower’s Auth UID.  
+Phone uniqueness: enforce outside rules (e.g. Cloud Function / `phone_index`).
