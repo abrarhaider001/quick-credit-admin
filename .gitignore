@@ -26,3 +26,7 @@ dist-ssr
 # Environment variables
 .env
 .env.local
+
+# Firebase Admin SDK key (do not commit)
+*-firebase-adminsdk-*.json
+serviceAccount.json
