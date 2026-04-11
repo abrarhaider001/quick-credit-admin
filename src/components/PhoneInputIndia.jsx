@@ -8,7 +8,7 @@ export function PhoneInputIndia({
   value10,
   onChange10,
   disabled = false,
-  placeholder = '9876543210',
+  placeholder = 'Enter phone number',
   className = '',
   required = false,
 }) {

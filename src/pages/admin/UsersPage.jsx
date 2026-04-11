@@ -4,6 +4,7 @@ import {
   getAdminSettingsOnce,
   isPhoneUsedByAnotherUser,
   subscribeUsers,
+  syncBlockedListAfterUserSave,
   updateUserDoc,
 } from '../../api/firestoreAdmin'
 import { Modal } from '../../components/Modal'
@@ -312,6 +313,11 @@ function UserCreateModal({ onClose, onSaved, confirm, toast }) {
         isBlocked,
         loanSettings: { minLimit: minN, maxLimit: maxN, selectedAmount: selN },
       })
+      await syncBlockedListAfterUserSave({
+        phone: fullPhone,
+        previousPhone: null,
+        isBlocked,
+      })
       onSaved()
     } catch (err) {
       toast(err?.message || 'Create failed', 'error')
@@ -354,6 +360,9 @@ function UserCreateModal({ onClose, onSaved, confirm, toast }) {
             Blocked
           </span>
         </label>
+        <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
+          When checked, this number is also added to the global blocked list (same as Blocked users).
+        </p>
         <div className="form-grid form-grid--2 field--full">
           <label className="field">
             <span className="field__label">Loan min</span>
@@ -463,6 +472,11 @@ function UserEditModal({ user, onClose, onSaved, confirm, toast }) {
           selectedAmount: selN,
         },
       })
+      await syncBlockedListAfterUserSave({
+        phone: normalized,
+        previousPhone: user.phone,
+        isBlocked,
+      })
       onSaved()
     } catch (err) {
       toast(err?.message || 'Update failed', 'error')
@@ -501,6 +515,9 @@ function UserEditModal({ user, onClose, onSaved, confirm, toast }) {
             Blocked
           </span>
         </label>
+        <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
+          When checked, this number is also added to the global blocked list; when cleared, it is removed from that list.
+        </p>
         <div className="form-grid form-grid--2 field--full">
           <label className="field">
             <span className="field__label">Loan min</span>

@@ -180,6 +180,53 @@ export async function addBlockedPhone(phone) {
   })
 }
 
+/** Removes every `blocked_users` row for this phone (handles duplicate docs). */
+export async function removeBlockedEntriesForPhone(phone) {
+  const normalized = normalizeIndianPhoneStorage(phone)
+  if (!normalized) return
+  const q = query(collection(db, BLOCKED), where('phone', '==', normalized))
+  const snap = await getDocs(q)
+  await Promise.all(snap.docs.map((d) => deleteDoc(doc(db, BLOCKED, d.id))))
+}
+
+/**
+ * Keeps `blocked_users` aligned after a user’s phone / isBlocked changes.
+ * @param {{ phone: string, previousPhone?: string | null, isBlocked: boolean }} opts
+ */
+export async function syncBlockedListAfterUserSave({ phone, previousPhone, isBlocked }) {
+  const n = normalizeIndianPhoneStorage(phone)
+  if (!n) return
+  const prev =
+    previousPhone != null && String(previousPhone).trim() !== ''
+      ? normalizeIndianPhoneStorage(previousPhone)
+      : null
+
+  if (isBlocked) {
+    const exists = await isPhoneInBlockedList(n)
+    if (!exists) await addBlockedPhone(n)
+    if (prev && prev !== n) await removeBlockedEntriesForPhone(prev)
+  } else {
+    await removeBlockedEntriesForPhone(n)
+    if (prev && prev !== n) await removeBlockedEntriesForPhone(prev)
+  }
+}
+
+/** Sets `isBlocked` on every `users` doc with this phone (typically 0 or 1). */
+export async function setUsersBlockedByPhone(phone, isBlocked) {
+  const normalized = normalizeIndianPhoneStorage(phone)
+  if (!normalized) return
+  const q = query(collection(db, USERS), where('phone', '==', normalized))
+  const snap = await getDocs(q)
+  await Promise.all(
+    snap.docs.map((d) =>
+      updateDoc(doc(db, USERS, d.id), {
+        isBlocked: Boolean(isBlocked),
+        updatedAt: serverTimestamp(),
+      }),
+    ),
+  )
+}
+
 export async function deleteBlockedDoc(blockedDocId) {
   await deleteDoc(doc(db, BLOCKED, blockedDocId))
 }

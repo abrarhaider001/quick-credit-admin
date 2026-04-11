@@ -429,6 +429,8 @@ p {
   background: linear-gradient(135deg, var(--theme) 0%, var(--theme-dark) 100%);
   color: #fff;
   box-shadow: 0 10px 24px -8px rgba(79, 70, 229, 0.65);
+  padding: 10px 20px;
+  /* margin-right: 100px; */
 }
 
 .btn--primary:not(:disabled):hover {

@@ -3,6 +3,7 @@ import {
   addBlockedPhone,
   deleteBlockedDoc,
   isPhoneInBlockedList,
+  setUsersBlockedByPhone,
   subscribeBlocked,
 } from '../../api/firestoreAdmin'
 import { PhoneInputIndia } from '../../components/PhoneInputIndia'
@@ -67,6 +68,7 @@ export default function BlockedUsersPage() {
         return
       }
       await addBlockedPhone(full)
+      await setUsersBlockedByPhone(full, true)
       setPhoneLocal('')
       toast('Number blocked', 'success')
     } catch (err) {
@@ -81,6 +83,8 @@ export default function BlockedUsersPage() {
     if (!ok) return
     try {
       await deleteBlockedDoc(row.id)
+      const stillBlocked = await isPhoneInBlockedList(row.phone)
+      if (!stillBlocked) await setUsersBlockedByPhone(row.phone, false)
       toast('Removed', 'success')
     } catch (err) {
       toast(err?.message || 'Remove failed', 'error')
