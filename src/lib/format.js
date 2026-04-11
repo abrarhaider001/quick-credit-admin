@@ -25,10 +25,11 @@ export function fromDatetimeLocal(local) {
 
 export function formatMoney(n) {
   if (n == null || Number.isNaN(n)) return '—'
-  return new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'INR',
     maximumFractionDigits: 0,
+    minimumFractionDigits: 0,
   }).format(Number(n))
 }
 
