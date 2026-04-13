@@ -240,6 +240,7 @@ function UserCreateModal({ onClose, onSaved, confirm, toast }) {
   const [name, setName] = useState('')
   const [phoneLocal, setPhoneLocal] = useState('')
   const [isBlocked, setIsBlocked] = useState(false)
+  const [showBankAccount, setShowBankAccount] = useState(true)
   const [minLimit, setMinLimit] = useState(0)
   const [maxLimit, setMaxLimit] = useState(0)
   const [selectedAmount, setSelectedAmount] = useState(0)
@@ -311,6 +312,7 @@ function UserCreateModal({ onClose, onSaved, confirm, toast }) {
         name,
         phone: fullPhone,
         isBlocked,
+        showBankAccount,
         loanSettings: { minLimit: minN, maxLimit: maxN, selectedAmount: selN },
       })
       await syncBlockedListAfterUserSave({
@@ -363,6 +365,19 @@ function UserCreateModal({ onClose, onSaved, confirm, toast }) {
         <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
           When checked, this number is also added to the global blocked list (same as Blocked users).
         </p>
+        <label className="field field--full" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
+          <input
+            type="checkbox"
+            checked={showBankAccount}
+            onChange={(e) => setShowBankAccount(e.target.checked)}
+          />
+          <span className="field__label" style={{ margin: 0 }}>
+            Show bank account section to that user
+          </span>
+        </label>
+        <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
+          When unchecked, the borrower will not see the bank account information area.
+        </p>
         <div className="form-grid form-grid--2 field--full">
           <label className="field">
             <span className="field__label">Loan min</span>
@@ -404,6 +419,7 @@ function UserEditModal({ user, onClose, onSaved, confirm, toast }) {
   const [name, setName] = useState(user.name || '')
   const [phoneLocal, setPhoneLocal] = useState(() => getIndianLocal10ForInput(user.phone))
   const [isBlocked, setIsBlocked] = useState(Boolean(user.isBlocked))
+  const [showBankAccount, setShowBankAccount] = useState(user.showBankAccount !== false)
   const [minLimit, setMinLimit] = useState(user.loanSettings?.minLimit ?? 0)
   const [maxLimit, setMaxLimit] = useState(user.loanSettings?.maxLimit ?? 0)
   const [selectedAmount, setSelectedAmount] = useState(user.loanSettings?.selectedAmount ?? 0)
@@ -466,6 +482,7 @@ function UserEditModal({ user, onClose, onSaved, confirm, toast }) {
         phone: normalized,
         role: 'user',
         isBlocked,
+        showBankAccount,
         loanSettings: {
           minLimit: minN,
           maxLimit: maxN,
@@ -517,6 +534,19 @@ function UserEditModal({ user, onClose, onSaved, confirm, toast }) {
         </label>
         <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
           When checked, this number is also added to the global blocked list; when cleared, it is removed from that list.
+        </p>
+        <label className="field field--full" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
+          <input
+            type="checkbox"
+            checked={showBankAccount}
+            onChange={(e) => setShowBankAccount(e.target.checked)}
+          />
+          <span className="field__label" style={{ margin: 0 }}>
+            Show bank account section to that user
+          </span>
+        </label>
+        <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
+          When unchecked, the borrower will not see the bank account information area.
         </p>
         <div className="form-grid form-grid--2 field--full">
           <label className="field">

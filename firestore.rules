@@ -36,7 +36,8 @@ service cloud.firestore {
         && u.createdAt is timestamp
         && u.updatedAt is timestamp
         && u.loanSettings is map
-        && validLoanSettings(u.loanSettings);
+        && validLoanSettings(u.loanSettings)
+        && (!('showBankAccount' in u) || u.showBankAccount is bool);
     }
 
     function userSelfUpdateValid() {
@@ -46,7 +47,8 @@ service cloud.firestore {
         && after.role == before.role
         && after.phone == before.phone
         && after.isBlocked == before.isBlocked
-        && after.createdAt == before.createdAt;
+        && after.createdAt == before.createdAt
+        && after.showBankAccount == before.showBankAccount;
     }
 
     function orderDocumentShape() {
@@ -81,7 +83,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isAdmin() || isOwner(userId);
+      allow read, get, list: if true;
 
       allow create: if (isAdmin() && userDocumentShape())
         || (
@@ -98,8 +100,7 @@ service cloud.firestore {
     }
 
     match /orders/{orderId} {
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.userId == request.auth.uid);
+      allow read: if true;
 
       allow create: if isAdmin() && orderDocumentShape();
 
@@ -108,9 +109,11 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    /** Login gate: read blocked list (doc id and/or `phone` field). Writes admin-only. */
     match /blocked_users/{docId} {
-      allow read, write: if isAdmin();
-    }
+      allow read: if true;
+      allow write: if isAdmin();
+		}
 
     match /admin_settings/{docId} {
       allow read: if isAdmin();

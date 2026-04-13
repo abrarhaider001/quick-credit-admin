@@ -114,7 +114,7 @@ export async function updateUserDoc(userId, patch) {
  * Firestore-only borrower profile (no Firebase Auth). Auto document ID.
  * Phone stored as +91XXXXXXXXXX.
  */
-export async function createUserDoc({ name, phone, loanSettings, isBlocked }) {
+export async function createUserDoc({ name, phone, loanSettings, isBlocked, showBankAccount }) {
   const normalized = normalizeIndianPhoneStorage(phone)
   if (!normalized) throw new Error('Invalid Indian mobile number')
   await addDoc(collection(db, USERS), {
@@ -122,6 +122,7 @@ export async function createUserDoc({ name, phone, loanSettings, isBlocked }) {
     phone: normalized,
     role: 'user',
     isBlocked: Boolean(isBlocked),
+    showBankAccount: showBankAccount !== false,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     loanSettings: {

@@ -7,6 +7,7 @@
 | phone | string |
 | role | string (`admin` \| `user`) |
 | isBlocked | boolean |
+| showBankAccount | boolean (optional; if false, loan app hides bank account UI for this user) |
 | createdAt | timestamp |
 | updatedAt | timestamp |
 | loanSettings | map |
