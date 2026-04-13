@@ -110,6 +110,10 @@ export async function updateUserDoc(userId, patch) {
   })
 }
 
+export async function deleteUserDoc(userId) {
+  await deleteDoc(doc(db, USERS, userId))
+}
+
 /**
  * Firestore-only borrower profile (no Firebase Auth). Auto document ID.
  * Phone stored as +91XXXXXXXXXX.

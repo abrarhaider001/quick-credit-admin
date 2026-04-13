@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   createUserDoc,
+  deleteUserDoc,
   getAdminSettingsOnce,
   isPhoneUsedByAnotherUser,
   subscribeUsers,
@@ -70,6 +71,20 @@ export default function UsersPage() {
   const pageSafe = Math.min(page, totalPages)
   const slice = filtered.slice((pageSafe - 1) * PAGE_SIZE, pageSafe * PAGE_SIZE)
 
+  async function handleDeleteUser(u) {
+    const ok = await confirm(
+      `Permanently delete user "${u.name || u.id}"? This removes their Firestore profile only. Orders that reference this user are not deleted.`,
+    )
+    if (!ok) return
+    try {
+      await deleteUserDoc(u.id)
+      setEditing((cur) => (cur?.id === u.id ? null : cur))
+      toast('User removed', 'success')
+    } catch (e) {
+      toast(e?.message || 'Delete failed', 'error')
+    }
+  }
+
   return (
     <div>
       <div
@@ -93,9 +108,7 @@ export default function UsersPage() {
         <code className="inline-code">+913010668945</code>. New users are Firestore documents only — no
         Authentication account.
       </p> */}
-      <p className="admin-page-desc muted">
-        Here you can add, edit, and block users.
-      </p>
+      <p className="admin-page-desc muted">Here you can add, edit, block, or remove users.</p>
 
       {error && <div className="admin-error">{error}</div>}
 
@@ -166,13 +179,22 @@ export default function UsersPage() {
                           : '—'}
                       </td>
                       <td>
-                        <button
-                          type="button"
-                          className="btn btn--ghost btn--sm"
-                          onClick={() => setEditing(u)}
-                        >
-                          Edit
-                        </button>
+                        <div className="btn-row">
+                          <button
+                            type="button"
+                            className="btn btn--ghost btn--sm"
+                            onClick={() => setEditing(u)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--danger btn--sm"
+                            onClick={() => handleDeleteUser(u)}
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
