@@ -17,6 +17,7 @@ import {
   fromDatetimeLocal,
   toDatetimeLocalValue,
 } from '../../lib/format'
+import { readImageFileAsDataUrl } from '../../lib/loanImage'
 import {
   digitsOnly,
   fullPhoneFromLocal10,
@@ -149,6 +150,7 @@ export default function OrdersPage({ completed }) {
               <thead>
                 <tr>
                   <th>Loan name</th>
+                  <th>Image</th>
                   <th>Phone</th>
                   <th>Loan</th>
                   <th>Total due</th>
@@ -160,7 +162,7 @@ export default function OrdersPage({ completed }) {
               <tbody>
                 {slice.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <div className="empty-state">No orders found.</div>
                     </td>
                   </tr>
@@ -168,6 +170,17 @@ export default function OrdersPage({ completed }) {
                   slice.map((o) => (
                     <tr key={o.id}>
                       <td>{o.userName || '—'}</td>
+                      <td>
+                        {o.loanImageDataUrl ? (
+                          <img
+                            src={o.loanImageDataUrl}
+                            alt=""
+                            className="admin-table__loan-thumb"
+                          />
+                        ) : (
+                          '—'
+                        )}
+                      </td>
                       <td className="admin-table__mono">{formatIndianPhoneDisplay(o.phone)}</td>
                       <td>{formatMoney(o.loanAmount)}</td>
                       <td>{formatMoney(o.totalDueAmount)}</td>
@@ -276,6 +289,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
   const [isCompleted, setIsCompleted] = useState(
     isEdit ? Boolean(order?.isCompleted) : Boolean(defaultCompleted),
   )
+  const [loanImageDataUrl, setLoanImageDataUrl] = useState(order?.loanImageDataUrl || '')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -323,6 +337,16 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
       return
     }
 
+    const imageTrimmed = String(loanImageDataUrl).trim()
+    if (!imageTrimmed) {
+      toast('Loan image is required. Choose a JPEG, PNG, WebP, or GIF file.', 'error')
+      return
+    }
+    if (imageTrimmed.length > 850000) {
+      toast('Image is too large after encoding. Use a smaller file.', 'error')
+      return
+    }
+
     setSaving(true)
     try {
       if (isEdit) {
@@ -335,6 +359,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
           dueDate: dueD,
           paymentUrl: String(paymentUrl),
           isCompleted,
+          loanImageDataUrl: imageTrimmed || null,
         })
       } else {
         await createOrder({
@@ -347,6 +372,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
           dueDate: dueD,
           paymentUrl: String(paymentUrl),
           isCompleted,
+          loanImageDataUrl: imageTrimmed,
         })
       }
       onSaved()
@@ -466,6 +492,52 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
             placeholder="https://"
           />
         </label>
+        <label className="field field--full">
+          <span className="field__label">Loan image</span>
+          <input
+            type="file"
+            className="input"
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+            aria-label="Upload loan image"
+            onChange={async (e) => {
+              const f = e.target.files?.[0]
+              e.target.value = ''
+              if (!f) return
+              try {
+                const dataUrl = await readImageFileAsDataUrl(f)
+                setLoanImageDataUrl(dataUrl)
+              } catch (err) {
+                toast(err?.message || 'Could not use this image', 'error')
+              }
+            }}
+          />
+        </label>
+        {loanImageDataUrl ? (
+          <div className="field field--full" style={{ marginTop: '-0.25rem' }}>
+            <img
+              src={loanImageDataUrl}
+              alt="Loan preview"
+              style={{
+                maxHeight: 140,
+                maxWidth: '100%',
+                borderRadius: 8,
+                display: 'block',
+                objectFit: 'contain',
+              }}
+            />
+            <button
+              type="button"
+              className="btn btn--ghost btn--sm"
+              style={{ marginTop: '0.5rem' }}
+              onClick={() => setLoanImageDataUrl('')}
+            >
+              Remove image
+            </button>
+          </div>
+        ) : null}
+        <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
+          Required. Stored as a base64 data URL on the order (max ~450 KB file before encoding).
+        </p>
         <label className="field field--full" style={{ flexDirection: 'row', alignItems: 'center', gap: '0.5rem' }}>
           <input type="checkbox" checked={isCompleted} onChange={(e) => setIsCompleted(e.target.checked)} />
           <span className="field__label" style={{ margin: 0 }}>

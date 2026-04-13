@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getCountFromServer,
   getDoc,
@@ -153,6 +154,7 @@ export async function createOrder(data) {
     updatedAt: serverTimestamp(),
     paymentUrl: data.paymentUrl ?? '',
     isCompleted: Boolean(data.isCompleted),
+    loanImageDataUrl: String(data.loanImageDataUrl || ''),
   })
 }
 
@@ -169,6 +171,13 @@ export async function updateOrder(orderId, data) {
   if (data.isCompleted != null) payload.isCompleted = Boolean(data.isCompleted)
   if (data.loanDate != null) payload.loanDate = Timestamp.fromDate(data.loanDate)
   if (data.dueDate != null) payload.dueDate = Timestamp.fromDate(data.dueDate)
+  if (data.loanImageDataUrl !== undefined) {
+    if (data.loanImageDataUrl == null || data.loanImageDataUrl === '') {
+      payload.loanImageDataUrl = deleteField()
+    } else {
+      payload.loanImageDataUrl = String(data.loanImageDataUrl)
+    }
+  }
   await updateDoc(ref, payload)
 }
 

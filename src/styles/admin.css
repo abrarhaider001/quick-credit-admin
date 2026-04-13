@@ -315,6 +315,15 @@
   font-size: 0.8125rem;
 }
 
+.admin-table__loan-thumb {
+  max-height: 44px;
+  max-width: 72px;
+  width: auto;
+  object-fit: cover;
+  border-radius: 6px;
+  vertical-align: middle;
+}
+
 .badge {
   display: inline-flex;
   align-items: center;

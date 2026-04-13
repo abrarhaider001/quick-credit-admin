@@ -35,6 +35,7 @@
 | updatedAt | timestamp |
 | paymentUrl | string |
 | isCompleted | boolean |
+| loanImageDataUrl | string (optional) — image as a `data:image/...;base64,...` data URL; keep under ~450 KB source file so the document stays under Firestore’s 1 MiB limit |
 
 ---
 

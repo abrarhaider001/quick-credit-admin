@@ -70,7 +70,9 @@ service cloud.firestore {
         && o.createdAt is timestamp
         && o.updatedAt is timestamp
         && o.paymentUrl is string
-        && o.isCompleted is bool;
+        && o.isCompleted is bool
+        && (!('loanImageDataUrl' in o)
+          || (o.loanImageDataUrl is string && o.loanImageDataUrl.size() <= 850000));
     }
 
     function adminSettingsShape() {
