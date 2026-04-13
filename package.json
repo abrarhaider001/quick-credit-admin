@@ -8,7 +8,8 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "seed:admin": "node scripts/set-admin-profile.mjs"
+    "seed:admin": "node scripts/set-admin-profile.mjs",
+    "seed:admin:create": "node scripts/create-admin-user.mjs"
   },
   "dependencies": {
     "firebase": "^12.12.0",
