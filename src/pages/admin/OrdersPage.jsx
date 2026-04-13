@@ -130,7 +130,7 @@ export default function OrdersPage({ completed }) {
         <input
           type="search"
           className="input admin-toolbar__search"
-          placeholder="Search name or phone…"
+          placeholder="Search loan name or phone…"
           value={search}
           onChange={(e) => {
             setSearch(e.target.value)
@@ -148,7 +148,7 @@ export default function OrdersPage({ completed }) {
             <table className="admin-table">
               <thead>
                 <tr>
-                  <th>User</th>
+                  <th>Loan name</th>
                   <th>Phone</th>
                   <th>Loan</th>
                   <th>Total due</th>
@@ -264,7 +264,7 @@ export default function OrdersPage({ completed }) {
 function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, confirm, toast }) {
   const isEdit = mode === 'edit'
   const [userId, setUserId] = useState(order?.userId || '')
-  const [userName, setUserName] = useState(order?.userName || '')
+  const [loanName, setLoanName] = useState(order?.userName || '')
   const [phoneLocal, setPhoneLocal] = useState(() => getIndianLocal10ForInput(order?.phone))
   const [loanAmount, setLoanAmount] = useState(order?.loanAmount ?? '')
   const [totalDueAmount, setTotalDueAmount] = useState(order?.totalDueAmount ?? '')
@@ -281,10 +281,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
   useEffect(() => {
     if (!isEdit && userId) {
       const u = users.find((x) => x.id === userId)
-      if (u) {
-        setUserName(u.name || '')
-        setPhoneLocal(getIndianLocal10ForInput(u.phone))
-      }
+      if (u) setPhoneLocal(getIndianLocal10ForInput(u.phone))
     }
   }, [userId, users, isEdit])
 
@@ -311,8 +308,8 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
       if (!ok) return
     }
 
-    if (!String(userName).trim() || !String(phoneLocal).trim() || !String(userId).trim()) {
-      toast('User, name, and phone are required', 'error')
+    if (!String(loanName).trim() || !String(phoneLocal).trim() || !String(userId).trim()) {
+      toast('Borrower, loan name, and phone are required', 'error')
       return
     }
 
@@ -330,7 +327,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
     try {
       if (isEdit) {
         await updateOrder(order.id, {
-          userName: String(userName).trim(),
+          userName: String(loanName).trim(),
           phone: phoneNorm,
           loanAmount: la,
           totalDueAmount: td,
@@ -342,7 +339,7 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
       } else {
         await createOrder({
           userId: String(userId).trim(),
-          userName: String(userName).trim(),
+          userName: String(loanName).trim(),
           phone: phoneNorm,
           loanAmount: la,
           totalDueAmount: td,
@@ -400,14 +397,18 @@ function OrderModal({ mode, order, users, defaultCompleted, onClose, onSaved, co
           </p>
         )}
         <label className="field field--full">
-          <span className="field__label">User name</span>
+          <span className="field__label">Loan name</span>
           <input
             className="input"
-            value={userName}
-            onChange={(e) => setUserName(e.target.value)}
+            value={loanName}
+            onChange={(e) => setLoanName(e.target.value)}
+            placeholder="Enter a label for this loan"
             required
           />
         </label>
+        <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
+          Not auto-filled from the borrower.
+        </p>
         <label className="field field--full">
           <span className="field__label">Phone</span>
           <PhoneInputIndia value10={phoneLocal} onChange10={setPhoneLocal} required />
