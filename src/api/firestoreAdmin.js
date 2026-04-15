@@ -245,7 +245,14 @@ export async function deleteBlockedDoc(blockedDocId) {
   await deleteDoc(doc(db, BLOCKED, blockedDocId))
 }
 
-export async function saveAdminSettings({ minLimit, maxLimit, defaultInterestRate }) {
+export async function saveAdminSettings({
+  minLimit,
+  maxLimit,
+  defaultInterestRate,
+  bankAccountLabel,
+  bankAccountNumber,
+  bankName,
+}) {
   const ref = doc(db, SETTINGS, CONFIG_ID)
   const payload = {
     minLimit: Number(minLimit),
@@ -255,6 +262,9 @@ export async function saveAdminSettings({ minLimit, maxLimit, defaultInterestRat
   if (defaultInterestRate !== '' && defaultInterestRate != null) {
     payload.defaultInterestRate = Number(defaultInterestRate)
   }
+  if (bankAccountLabel !== undefined) payload.bankAccountLabel = String(bankAccountLabel || '').trim()
+  if (bankAccountNumber !== undefined) payload.bankAccountNumber = String(bankAccountNumber || '').trim()
+  if (bankName !== undefined) payload.bankName = String(bankName || '').trim()
   await setDoc(ref, payload, { merge: true })
 }
 

@@ -389,6 +389,56 @@
   grid-column: 1 / -1;
 }
 
+/* ——— Settings layout ——— */
+.settings-form-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.settings-panel {
+  overflow: hidden;
+}
+
+.settings-panel__body {
+  padding: 1.25rem;
+}
+
+.settings-panel__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.settings-panel__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.settings-panel__title--bank {
+  color: #000000;
+}
+
+.settings-panel__hint--bank {
+  color: #000000;
+}
+
+.settings-bank-label {
+  color: #000000;
+}
+
+@media (min-width: 960px) {
+  .settings-form-layout {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .settings-panel--actions {
+    grid-column: 1 / -1;
+  }
+}
+
 /* ——— Modal ——— */
 .modal-overlay {
   position: fixed;

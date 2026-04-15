@@ -81,7 +81,10 @@ service cloud.firestore {
         && s.minLimit is number
         && s.maxLimit is number
         && s.updatedAt is timestamp
-        && (!('defaultInterestRate' in s) || s.defaultInterestRate is number);
+        && (!('defaultInterestRate' in s) || s.defaultInterestRate is number)
+        && (!('bankAccountLabel' in s) || s.bankAccountLabel is string)
+        && (!('bankAccountNumber' in s) || s.bankAccountNumber is string)
+        && (!('bankName' in s) || s.bankName is string);
     }
 
     match /users/{userId} {
@@ -118,7 +121,8 @@ service cloud.firestore {
 		}
 
     match /admin_settings/{docId} {
-      allow read: if isAdmin();
+      // Admin can manage global config; all signed-in users can read bank/settings info.
+      allow read: if signedIn();
       allow create, update: if isAdmin() && adminSettingsShape();
       allow delete: if isAdmin();
     }

@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react'
 import { saveAdminSettings, subscribeAdminSettings } from '../../api/firestoreAdmin'
 import { useUi } from '../../context/useUi'
 
+function formatCardNumberInput(value) {
+  const digits = String(value || '')
+    .replace(/\D/g, '')
+    .slice(0, 16)
+  return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim()
+}
+
 export default function SettingsPage() {
   const { toast } = useUi()
   const [data, setData] = useState(null)
@@ -10,6 +17,9 @@ export default function SettingsPage() {
   const [minLimit, setMinLimit] = useState('')
   const [maxLimit, setMaxLimit] = useState('')
   const [defaultInterestRate, setDefaultInterestRate] = useState('')
+  const [bankAccountLabel, setBankAccountLabel] = useState('')
+  const [bankAccountNumber, setBankAccountNumber] = useState('')
+  const [bankName, setBankName] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
@@ -24,6 +34,9 @@ export default function SettingsPage() {
           setDefaultInterestRate(
             d.defaultInterestRate != null ? String(d.defaultInterestRate) : '',
           )
+          setBankAccountLabel(String(d.bankAccountLabel ?? ''))
+          setBankAccountNumber(formatCardNumberInput(d.bankAccountNumber))
+          setBankName(String(d.bankName ?? ''))
         }
       },
       (e) => {
@@ -53,6 +66,9 @@ export default function SettingsPage() {
         minLimit: minN,
         maxLimit: maxN,
         defaultInterestRate: defaultInterestRate === '' ? null : defaultInterestRate,
+        bankAccountLabel,
+        bankAccountNumber,
+        bankName,
       })
       toast('Settings saved', 'success')
     } catch (err) {
@@ -74,51 +90,93 @@ export default function SettingsPage() {
       {loading ? (
         <div className="admin-loading">Loading settings…</div>
       ) : (
-        <div className="table-wrap" style={{ maxWidth: 480 }}>
-          <form className="form-grid" style={{ padding: '1.25rem' }} onSubmit={handleSave}>
-            <label className="field">
-              <span className="field__label">Global min limit</span>
-              <input
-                className="input"
-                type="number"
-                value={minLimit}
-                onChange={(e) => setMinLimit(e.target.value)}
-                required
-              />
-            </label>
-            <label className="field">
-              <span className="field__label">Global max limit</span>
-              <input
-                className="input"
-                type="number"
-                value={maxLimit}
-                onChange={(e) => setMaxLimit(e.target.value)}
-                required
-              />
-            </label>
-            <label className="field field--full">
-              <span className="field__label">Default interest rate (optional)</span>
-              <input
-                className="input"
-                type="number"
-                step="0.01"
-                value={defaultInterestRate}
-                onChange={(e) => setDefaultInterestRate(e.target.value)}
-                placeholder="e.g. 12.5"
-              />
-            </label>
-            {!data && (
-              <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
-                No config exists yet — saving will create <code className="inline-code">config</code>.
-              </p>
-            )}
-            <div className="btn-row" style={{ marginTop: '0.5rem' }}>
-              <button type="submit" className="btn btn--primary btn--sm" disabled={saving}>
-                {saving ? 'Saving…' : 'Save settings'}
-              </button>
+        <form className="settings-form-layout" onSubmit={handleSave}>
+          <section className="table-wrap settings-panel">
+            <div className="settings-panel__body form-grid">
+              <h2 className="settings-panel__title">Global settings</h2>
+              <label className="field">
+                <span className="field__label">Global min limit</span>
+                <input
+                  className="input"
+                  type="number"
+                  value={minLimit}
+                  onChange={(e) => setMinLimit(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="field">
+                <span className="field__label">Global max limit</span>
+                <input
+                  className="input"
+                  type="number"
+                  value={maxLimit}
+                  onChange={(e) => setMaxLimit(e.target.value)}
+                  required
+                />
+              </label>
+              <label className="field field--full">
+                <span className="field__label">Default interest rate (optional)</span>
+                <input
+                  className="input"
+                  type="number"
+                  step="0.01"
+                  value={defaultInterestRate}
+                  onChange={(e) => setDefaultInterestRate(e.target.value)}
+                  placeholder="e.g. 12.5"
+                />
+              </label>
             </div>
-          </form>
-        </div>
+          </section>
+
+          <section className="table-wrap settings-panel settings-panel--bank">
+            <div className="settings-panel__body form-grid">
+              <h2 className="settings-panel__title settings-panel__title--bank">Bank account information</h2>
+              <label className="field field--full">
+                <span className="field__label settings-bank-label">Card label (optional)</span>
+                <input
+                  className="input"
+                  value={bankAccountLabel}
+                  onChange={(e) => setBankAccountLabel(e.target.value)}
+                  placeholder="Primary bank account"
+                />
+              </label>
+              <label className="field field--full">
+                <span className="field__label settings-bank-label">Bank account number (optional)</span>
+                <input
+                  className="input"
+                  value={bankAccountNumber}
+                  onChange={(e) => setBankAccountNumber(formatCardNumberInput(e.target.value))}
+                  placeholder="1234 5678 9012 8842"
+                  inputMode="numeric"
+                />
+              </label>
+              <label className="field field--full">
+                <span className="field__label settings-bank-label">Bank name (optional)</span>
+                <input
+                  className="input"
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  placeholder="QuickCredit Partner Bank"
+                />
+              </label>
+            </div>
+          </section>
+
+          <section className="table-wrap settings-panel settings-panel--actions">
+            <div className="settings-panel__body">
+              {!data && (
+                <p className="muted" style={{ fontSize: '0.8125rem', margin: 0 }}>
+                  No config exists yet — saving will create <code className="inline-code">config</code>.
+                </p>
+              )}
+              <div className="btn-row" style={{ marginTop: '0.75rem' }}>
+                <button type="submit" className="btn btn--primary btn--sm" disabled={saving}>
+                  {saving ? 'Saving…' : 'Save settings'}
+                </button>
+              </div>
+            </div>
+          </section>
+        </form>
       )}
     </div>
   )

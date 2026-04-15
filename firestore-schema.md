@@ -53,6 +53,9 @@
 | minLimit | number |
 | maxLimit | number |
 | defaultInterestRate | number (optional) |
+| bankAccountLabel | string (optional; e.g. `Primary bank account`) |
+| bankAccountNumber | string (optional; e.g. `1234 5678 9012 8842`) |
+| bankName | string (optional; e.g. `QuickCredit Partner Bank`) |
 | updatedAt | timestamp |
 
 ---
@@ -60,3 +63,7 @@
 Auth custom claim for admins: `role` = `"admin"`.  
 `orders.userId` must equal the borrower’s Auth UID.  
 Phone uniqueness: enforce outside rules (e.g. Cloud Function / `phone_index`).
+
+`admin_settings/config` permissions:
+- Read: any signed-in user (admin and borrower apps can display shared bank card/settings info).
+- Create/Update/Delete: admin only.
