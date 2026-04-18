@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react'
 import { saveAdminSettings, subscribeAdminSettings } from '../../api/firestoreAdmin'
 import { useUi } from '../../context/useUi'
-
-function formatCardNumberInput(value) {
-  const digits = String(value || '')
-    .replace(/\D/g, '')
-    .slice(0, 16)
-  return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim()
-}
+import { formatCardNumberInput } from '../../lib/format'
 
 export default function SettingsPage() {
   const { toast } = useUi()

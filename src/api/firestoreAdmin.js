@@ -118,16 +118,33 @@ export async function deleteUserDoc(userId) {
 /**
  * Firestore-only borrower profile (no Firebase Auth). Auto document ID.
  * Phone stored as +91XXXXXXXXXX.
+ * @param {object} opts
+ * @param {boolean} [opts.useGlobalBankDetails=true] If false, saves per-user bank fields.
+ * @param {string} [opts.bankAccountLabel]
+ * @param {string} [opts.bankAccountNumber]
+ * @param {string} [opts.bankName]
  */
-export async function createUserDoc({ name, phone, loanSettings, isBlocked, showBankAccount }) {
+export async function createUserDoc({
+  name,
+  phone,
+  loanSettings,
+  isBlocked,
+  showBankAccount,
+  useGlobalBankDetails = true,
+  bankAccountLabel = '',
+  bankAccountNumber = '',
+  bankName = '',
+}) {
   const normalized = normalizeIndianPhoneStorage(phone)
   if (!normalized) throw new Error('Invalid Indian mobile number')
-  await addDoc(collection(db, USERS), {
+  const useGlobal = useGlobalBankDetails !== false
+  const payload = {
     name: String(name).trim(),
     phone: normalized,
     role: 'user',
     isBlocked: Boolean(isBlocked),
     showBankAccount: showBankAccount !== false,
+    useGlobalBankDetails: useGlobal,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     loanSettings: {
@@ -135,7 +152,13 @@ export async function createUserDoc({ name, phone, loanSettings, isBlocked, show
       maxLimit: Number(loanSettings.maxLimit),
       selectedAmount: Number(loanSettings.selectedAmount),
     },
-  })
+  }
+  if (!useGlobal) {
+    payload.bankAccountLabel = String(bankAccountLabel || '').trim()
+    payload.bankAccountNumber = String(bankAccountNumber || '').trim()
+    payload.bankName = String(bankName || '').trim()
+  }
+  await addDoc(collection(db, USERS), payload)
 }
 
 /**

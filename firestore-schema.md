@@ -8,9 +8,15 @@
 | role | string (`admin` \| `user`) |
 | isBlocked | boolean |
 | showBankAccount | boolean (optional; if false, loan app hides bank account UI for this user) |
+| useGlobalBankDetails | boolean (optional; default treated as `true` — borrower sees bank info from `admin_settings/config`) |
+| bankAccountLabel | string (optional; used when `useGlobalBankDetails` is `false`) |
+| bankAccountNumber | string (optional; e.g. spaced groups `1234 5678 9012 8842`) |
+| bankName | string (optional) |
 | createdAt | timestamp |
 | updatedAt | timestamp |
 | loanSettings | map |
+
+Per-user bank display: admins set `useGlobalBankDetails` to `true` so the user sees the global card from **Admin settings**, or `false` and fill the three bank fields so only that user sees those values. Self-service user updates cannot change these bank fields (enforced in `firestore.rules`).
 
 **`loanSettings` (map)**  
 | Field | Type |
@@ -67,3 +73,7 @@ Phone uniqueness: enforce outside rules (e.g. Cloud Function / `phone_index`).
 `admin_settings/config` permissions:
 - Read: any signed-in user (admin and borrower apps can display shared bank card/settings info).
 - Create/Update/Delete: admin only.
+
+**`users` bank fields permissions**
+- Read: public as existing `users` read rules (borrower app can read own or listed profiles per your app rules).
+- Create/Update bank-related fields: admin only (owners cannot add or change `useGlobalBankDetails` / `bankAccountLabel` / `bankAccountNumber` / `bankName` via self-update).

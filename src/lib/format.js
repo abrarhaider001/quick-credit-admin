@@ -49,3 +49,11 @@ export function formatIndianPhoneDisplay(phone) {
   if (local.length === 10) return `+91${local}`
   return String(phone)
 }
+
+/** Groups digits as `1234 5678 9012 8842` for bank account / card-style display (max 16 digits). */
+export function formatCardNumberInput(value) {
+  const digits = String(value || '')
+    .replace(/\D/g, '')
+    .slice(0, 16)
+  return digits.replace(/(\d{4})(?=\d)/g, '$1 ').trim()
+}

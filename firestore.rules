@@ -37,7 +37,27 @@ service cloud.firestore {
         && u.updatedAt is timestamp
         && u.loanSettings is map
         && validLoanSettings(u.loanSettings)
-        && (!('showBankAccount' in u) || u.showBankAccount is bool);
+        && (!('showBankAccount' in u) || u.showBankAccount is bool)
+        && (!('useGlobalBankDetails' in u) || u.useGlobalBankDetails is bool)
+        && (!('bankAccountLabel' in u)
+          || (u.bankAccountLabel is string && u.bankAccountLabel.size() <= 120))
+        && (!('bankAccountNumber' in u)
+          || (u.bankAccountNumber is string && u.bankAccountNumber.size() <= 80))
+        && (!('bankName' in u) || (u.bankName is string && u.bankName.size() <= 120));
+    }
+
+    /** Borrowers cannot add or change per-user bank fields; only admins can. */
+    function userSelfBankUnchanged() {
+      let after = request.resource.data;
+      let before = resource.data;
+      return (!('useGlobalBankDetails' in after)
+          || ('useGlobalBankDetails' in before && after.useGlobalBankDetails == before.useGlobalBankDetails))
+        && (!('bankAccountLabel' in after)
+          || ('bankAccountLabel' in before && after.bankAccountLabel == before.bankAccountLabel))
+        && (!('bankAccountNumber' in after)
+          || ('bankAccountNumber' in before && after.bankAccountNumber == before.bankAccountNumber))
+        && (!('bankName' in after)
+          || ('bankName' in before && after.bankName == before.bankName));
     }
 
     function userSelfUpdateValid() {
@@ -48,7 +68,8 @@ service cloud.firestore {
         && after.phone == before.phone
         && after.isBlocked == before.isBlocked
         && after.createdAt == before.createdAt
-        && after.showBankAccount == before.showBankAccount;
+        && after.showBankAccount == before.showBankAccount
+        && userSelfBankUnchanged();
     }
 
     function orderDocumentShape() {
@@ -122,7 +143,7 @@ service cloud.firestore {
 
     match /admin_settings/{docId} {
       // Admin can manage global config; all signed-in users can read bank/settings info.
-      allow read: if signedIn();
+      allow read: if true;
       allow create, update: if isAdmin() && adminSettingsShape();
       allow delete: if isAdmin();
     }
